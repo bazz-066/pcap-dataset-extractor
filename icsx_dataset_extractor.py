@@ -91,14 +91,26 @@ def parse_packet(flabels, labels, header, packet):
             seq_num = 0
             d_length = transporthdr.get_uh_ulen()
             protocol = "udp_ip"
+        elif isinstance(transporthdr, ImpactPacket.ICMP):
+            s_port = 0
+            d_port = 0
+            seq_num = 0
+            d_length = 0
+            protocol = "icmp"
+        elif isinstance(transporthdr, ImpactPacket.IGMP):
+            s_port = 0
+            d_port = 0
+            seq_num = 0
+            d_length = 0
+            protocol = "igmp"
         else:
             s_port = 0
             d_port = 0
             seq_num = 0
             d_length = -1
-            protocol = "unknown"
+            protocol = transporthdr.__class__
 
-        if d_length == 0:
+        if d_length == 0 and (protocol == "tcp_ip" or protocol == "udp_ip"):
             return
 
         id = "{}-{}-{}-{}-{}".format(s_addr, s_port, d_addr, d_port, protocol)
