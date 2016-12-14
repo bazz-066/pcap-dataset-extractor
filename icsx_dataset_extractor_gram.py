@@ -11,47 +11,53 @@ from lxml import etree
 def main(argv):
     try:
         data_date = argv[1]
-        filename = data_date[data_date.index("Testbed"):len(data_date) - 4]
-
-        date_to_filename = {'TestbedSatJun12Flows': '12jun',
-                            'TestbedSunJun13Flows': '13jun',
-                            'TestbedMonJun14Flows': '14jun',
-                            'TestbedTueJun15-1Flows': '15jun',
-                            'TestbedTueJun15-2Flows': '15jun',
-                            'TestbedTueJun15-3Flows': '15jun',
-                            'TestbedWedJun16-1Flows': '16jun',
-                            'TestbedWedJun16-2Flows': '16jun',
-                            'TestbedWedJun16-3Flows': '16jun',
-                            'TestbedThuJun17-1Flows': '17jun',
-                            'TestbedThuJun17-2Flows': '17jun',
-                            'TestbedThuJun17-3Flows': '17jun',
-                            }
         dataset_dir = "/home/baskoro/Documents/Dataset/ISCX12/without retransmission/"
 
-        flabels = open(dataset_dir + "csv/" + date_to_filename[filename] + ".csv", "w")
-        labels = {}
-        fdataset = etree.parse(argv[1])
-        root = fdataset.getroot()
+        if data_date != "11jun":
+            filename = data_date[data_date.index("Testbed"):len(data_date) - 4]
 
-        for record in root.getchildren():
-            parsed = {}
-            parsed["src_address"] = record.find("source").text
-            parsed["dst_address"] = record.find("destination").text
-            parsed["src_port"] = record.find("sourcePort").text
-            parsed["dst_port"] = record.find("destinationPort").text
-            parsed["protocol"] = record.find("protocolName").text
-            if record.find("Tag").text == "Attack":
-                parsed["label"] = 1
-            else:
-                parsed["label"] = 0
+            date_to_filename = {'TestbedSatJun12Flows': '12jun',
+                                'TestbedSunJun13Flows': '13jun',
+                                'TestbedMonJun14Flows': '14jun',
+                                'TestbedTueJun15-1Flows': '15jun',
+                                'TestbedTueJun15-2Flows': '15jun',
+                                'TestbedTueJun15-3Flows': '15jun',
+                                'TestbedWedJun16-1Flows': '16jun',
+                                'TestbedWedJun16-2Flows': '16jun',
+                                'TestbedWedJun16-3Flows': '16jun',
+                                'TestbedThuJun17-1Flows': '17jun',
+                                'TestbedThuJun17-2Flows': '17jun',
+                                'TestbedThuJun17-3Flows': '17jun',
+                                }
 
-            save_label(labels, parsed)
-            #bpf_src = "src host " + parsed["src_address"]
-            #bpf_dst = "dst host " + parsed["dst_address"]
-            #bpf_src_port = "src port " + parsed["src_port"]
-            #bpf_dst_port = "dst port " + parsed["dst_port"]
+            flabels = open(dataset_dir + "csv/" + date_to_filename[filename] + ".csv", "w")
+            labels = {}
+            fdataset = etree.parse(argv[1])
+            root = fdataset.getroot()
 
-        print("Labels are stored, reading pcap files...\n")
+            for record in root.getchildren():
+                parsed = {}
+                parsed["src_address"] = record.find("source").text
+                parsed["dst_address"] = record.find("destination").text
+                parsed["src_port"] = record.find("sourcePort").text
+                parsed["dst_port"] = record.find("destinationPort").text
+                parsed["protocol"] = record.find("protocolName").text
+                if record.find("Tag").text == "Attack":
+                    parsed["label"] = 1
+                else:
+                    parsed["label"] = 0
+
+                save_label(labels, parsed)
+                #bpf_src = "src host " + parsed["src_address"]
+                #bpf_dst = "dst host " + parsed["dst_address"]
+                #bpf_src_port = "src port " + parsed["src_port"]
+                #bpf_dst_port = "dst port " + parsed["dst_port"]
+
+            print("Labels are stored, reading pcap files...\n")
+        else:
+            flabels = open(dataset_dir + "csv/11jun.csv", "w")
+            labels = {}
+
         try:
             read_pcap(argv[1], flabels, labels)
         except pcapy.PcapError as e:
@@ -60,7 +66,7 @@ def main(argv):
         flabels.close()
         print("Done\n")
     except IndexError as e:
-        print "Usage : python icsx_dataset_extractor.py <labelled filename>"
+        print "Usage : python icsx_dataset_extractor_gram.py <labelled filename>"
 
 
 def save_label(labels, parsed):
@@ -127,7 +133,9 @@ def parse_packet(flabels, labels, header, packet):
 
         id = "{}-{}-{}-{}-{}".format(s_addr, s_port, d_addr, d_port, protocol)
 
-        if labels.has_key(id):
+        if len(labels) == 0:
+            line = "{},{},{},{}".format("0", v_protocol, port_to_vector(d_port), d_length)
+        elif labels.has_key(id):
             line = "{},{},{},{}".format(labels[id], v_protocol, port_to_vector(d_port), d_length)
         else:
             line = "{},{},{},{}".format("0", v_protocol, port_to_vector(d_port), d_length)
@@ -151,24 +159,27 @@ def port_to_vector(port):
 
 
 def read_pcap(data_date, flabels, labels):
-    filename = data_date[data_date.index("Testbed"):len(data_date)-4]
-
-    date_to_filename = {'TestbedSatJun12Flows' : '12jun',
-                        'TestbedSunJun13Flows' : '13jun',
-                        'TestbedMonJun14Flows' : '14jun',
-                        'TestbedTueJun15-1Flows': '15jun',
-                        'TestbedTueJun15-2Flows': '15jun',
-                        'TestbedTueJun15-3Flows': '15jun',
-                        'TestbedWedJun16-1Flows': '16jun',
-                        'TestbedWedJun16-2Flows': '16jun',
-                        'TestbedWedJun16-3Flows': '16jun',
-                        'TestbedThuJun17-1Flows' : '17jun',
-                        'TestbedThuJun17-2Flows' : '17jun',
-                        'TestbedThuJun17-3Flows' : '17jun',
-                        }
     dataset_dir = "/home/baskoro/Documents/Dataset/ISCX12/without retransmission/"
+    if data_date != "11jun":
+        filename = data_date[data_date.index("Testbed"):len(data_date)-4]
 
-    cap = pcapy.open_offline(dataset_dir + "testbed-" + date_to_filename[filename] + ".pcap")
+        date_to_filename = {'TestbedSatJun12Flows' : '12jun',
+                            'TestbedSunJun13Flows' : '13jun',
+                            'TestbedMonJun14Flows' : '14jun',
+                            'TestbedTueJun15-1Flows': '15jun',
+                            'TestbedTueJun15-2Flows': '15jun',
+                            'TestbedTueJun15-3Flows': '15jun',
+                            'TestbedWedJun16-1Flows': '16jun',
+                            'TestbedWedJun16-2Flows': '16jun',
+                            'TestbedWedJun16-3Flows': '16jun',
+                            'TestbedThuJun17-1Flows' : '17jun',
+                            'TestbedThuJun17-2Flows' : '17jun',
+                            'TestbedThuJun17-3Flows' : '17jun',
+                            }
+
+        cap = pcapy.open_offline(dataset_dir + "testbed-" + date_to_filename[filename] + ".pcap")
+    else:
+        cap = pcapy.open_offline(dataset_dir + "testbed-11jun.pcap")
 
     while(1):
         (header, packet) = cap.next()
