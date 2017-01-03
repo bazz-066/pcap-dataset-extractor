@@ -30,7 +30,7 @@ def main(argv):
                                 'TestbedThuJun17-3Flows': '17jun',
                                 }
 
-            flabels = open(dataset_dir + "csv/" + date_to_filename[filename] + ".csv", "w")
+            flabels = open(dataset_dir + "csv-bytefreq/" + date_to_filename[filename] + ".csv", "w")
             labels = {}
             fdataset = etree.parse(argv[1])
             root = fdataset.getroot()
@@ -55,7 +55,7 @@ def main(argv):
 
             print("Labels are stored, reading pcap files...\n")
         else:
-            flabels = open(dataset_dir + "csv/11jun.csv", "w")
+            flabels = open(dataset_dir + "csv-bytefreq/11jun.csv", "w")
             labels = {}
 
         try:
@@ -149,7 +149,7 @@ def parse_packet(flabels, labels, header, packet):
 
 
 def port_to_vector(port):
-    ports = {20: '0', 21: '0', 22: '0', 23: '0', 25: '0', 53: '0', 80: '0', 110: '0', 139: '0', 443: '0', 445: '0'}
+    ports = {20: '0', 21: '0', 22: '0', 23: '0', 25: '0', 53: '0', 80: '0', 110: '0', 139: '0', 143: '0', 443: '0', 445: '0'}
 
     if port in ports:
         ports[port] = '1'

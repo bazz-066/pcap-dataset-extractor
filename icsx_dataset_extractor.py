@@ -25,7 +25,7 @@ def main(argv):
                             'TestbedThuJun17-2Flows': '17jun',
                             'TestbedThuJun17-3Flows': '17jun',
                             }
-        dataset_dir = "/home/baskoro/Documents/Dataset/ICSX 2012/"
+        dataset_dir = "/home/baskoro/Documents/Dataset/ISCX12/without retransmission/"
 
         flabels = open(dataset_dir + "csv/" + date_to_filename[filename] + ".csv", "w")
         labels = {}
@@ -139,7 +139,7 @@ def read_pcap(data_date, flabels, labels):
                         'TestbedThuJun17-2Flows' : '17jun',
                         'TestbedThuJun17-3Flows' : '17jun',
                         }
-    dataset_dir = "/home/baskoro/Documents/Dataset/ICSX 2012/"
+    dataset_dir = "/home/baskoro/Documents/Dataset/ISCX12/without retransmission/"
 
     cap = pcapy.open_offline(dataset_dir + "testbed-" + date_to_filename[filename] + ".pcap")
 
