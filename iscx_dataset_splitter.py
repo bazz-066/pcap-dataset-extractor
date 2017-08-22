@@ -3,6 +3,7 @@
 import hashlib
 import pcapy
 import sys
+import time
 
 from impacket import ImpactDecoder, ImpactPacket
 from lxml import etree
@@ -45,6 +46,10 @@ def save_label(labels, parsed):
     id_rev = "{}-{}-{}-{}-{}".format(parsed["dst_address"], parsed["dst_port"], parsed["src_address"], parsed["src_port"], parsed["protocol"])
     labels[id] = parsed["label"]
     labels[id_rev] = parsed["label"]
+
+
+def convert_timefromepoch(epochTimestamp):
+    return time.strftime('%Y/%m/%d %H:%M:%S', time.gmtime(epochTimestamp))
 
 
 def parse_packet(labels, dumper, header, packet):
@@ -91,8 +96,8 @@ def parse_packet(labels, dumper, header, packet):
             d_length = -1
             protocol = transporthdr.__class__
 
-        if d_length == 0 and (protocol == "tcp_ip" or protocol == "udp_ip"):
-            return
+        #if d_length == 0 and (protocol == "tcp_ip" or protocol == "udp_ip"):
+        #    return
 
         id = "{}-{}-{}-{}-{}".format(s_addr, s_port, d_addr, d_port, protocol)
 
@@ -130,6 +135,8 @@ def read_pcap(data_date, labels):
 
     while(1):
         (header, packet) = cap.next()
+        ts = convert_timefromepoch(float(header.getts()[0]))
+        print ts
         if not header:
             break
         parse_packet(labels, dumper, header, packet)

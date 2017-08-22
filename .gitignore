@@ -90,3 +90,4 @@ ENV/
 .ropeproject
 *.csv
 *.pcap
+/ISCX Viewer/ISCXViewer/nbproject/private/
