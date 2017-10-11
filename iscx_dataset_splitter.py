@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import hashlib
+import os
 import pcapy
 import sys
 import time
@@ -10,6 +11,7 @@ from lxml import etree
 
 def main(argv):
     try:
+        os.environ['TZ'] = 'Europe/London'
         labels = {}
         fdataset = etree.parse(argv[1])
         root = fdataset.getroot()
@@ -22,6 +24,8 @@ def main(argv):
             parsed["dst_port"] = record.find("destinationPort").text
             parsed["protocol"] = record.find("protocolName").text
             parsed["label"] = record.find("Tag").text
+            parsed["start_time"] = record.find("startDateTime").text.replace("T", " ")
+            parsed["stop_time"] = record.find("stopDateTime").text.replace("T", " ")
 
             save_label(labels, parsed)
             #bpf_src = "src host " + parsed["src_address"]
@@ -44,18 +48,38 @@ def main(argv):
 def save_label(labels, parsed):
     id = "{}-{}-{}-{}-{}".format(parsed["src_address"], parsed["src_port"], parsed["dst_address"], parsed["dst_port"], parsed["protocol"])
     id_rev = "{}-{}-{}-{}-{}".format(parsed["dst_address"], parsed["dst_port"], parsed["src_address"], parsed["src_port"], parsed["protocol"])
-    labels[id] = parsed["label"]
-    labels[id_rev] = parsed["label"]
+
+    # minus 4 hours spare 10 minutes before and after the written time
+    start_time = convert_epochfromstring(parsed['start_time']) + 13800
+    stop_time = convert_epochfromstring(parsed['stop_time']) + 15000
+
+    for i in range(0, 1000):
+        if labels.has_key(id + "-{}".format(i)):
+            continue
+        else:
+            id += "-{}".format(i)
+            id_rev += "-{}".format(i)
+            break
+
+    labels[id] = {'label': parsed["label"], 'start_time': start_time, 'stop_time': stop_time}
+    labels[id_rev] = {'label': parsed["label"], 'start_time': start_time, 'stop_time': stop_time}
 
 
 def convert_timefromepoch(epochTimestamp):
     return time.strftime('%Y/%m/%d %H:%M:%S', time.gmtime(epochTimestamp))
 
 
+def convert_epochfromstring(timeString):
+    pattern = '%Y-%m-%d %H:%M:%S'
+    epoch = int(time.mktime(time.strptime(timeString, pattern)))
+    return epoch
+
+
 def parse_packet(labels, dumper, header, packet):
     decoder = ImpactDecoder.EthDecoder()
     ether = decoder.decode(packet)
 
+    ts = int(header.getts()[0])
     #print str(ether.get_ether_type()) + " " + str(ImpactPacket.IP.ethertype)
 
     if ether.get_ether_type() == ImpactPacket.IP.ethertype:
@@ -100,14 +124,27 @@ def parse_packet(labels, dumper, header, packet):
         #    return
 
         id = "{}-{}-{}-{}-{}".format(s_addr, s_port, d_addr, d_port, protocol)
+        is_label_found = False
 
-        if labels.has_key(id):
-            if labels[id] == "Normal":
-                dumper[0].dump(header, packet)
+        for i in range(0, 1000):
+            tmp_id = id + "-{}".format(i)
+            if labels.has_key(tmp_id):
+                if ts > labels[tmp_id]["start_time"] and ts < labels[tmp_id]["stop_time"]:
+                    # print convert_timefromepoch(ts), convert_timefromepoch(labels[tmp_id]["start_time"]), convert_timefromepoch(labels[tmp_id]["stop_time"])
+                    if labels[tmp_id]["label"] == "Normal":
+                        dumper[0].dump(header, packet)
+                    else:
+                        dumper[1].dump(header, packet)
+
+                    is_label_found = True
+                    break
+                else:
+                    continue
             else:
-                dumper[1].dump(header, packet)
-        else:
-            dumper[0].dump(header, packet)
+                continue
+
+        if not is_label_found:
+            dumper[2].dump(header, packet)
 
 
 def read_pcap(data_date, labels):
@@ -132,14 +169,19 @@ def read_pcap(data_date, labels):
     dumper = []
     dumper.append(cap.dump_open(dataset_dir + "testbed-" + date_to_filename[filename] + "-normal.pcap"))
     dumper.append(cap.dump_open(dataset_dir + "testbed-" + date_to_filename[filename] + "-attack.pcap"))
+    dumper.append(cap.dump_open(dataset_dir + "testbed-" + date_to_filename[filename] + "-unknown.pcap"))
+    counter = 0
 
+    # for i in range(0,1000):
     while(1):
         (header, packet) = cap.next()
-        ts = convert_timefromepoch(float(header.getts()[0]))
-        print ts
+
         if not header:
             break
         parse_packet(labels, dumper, header, packet)
+        counter += 1
+        sys.stdout.write("\rProcessed {} packets.".format(counter))
+        sys.stdout.flush()
 
 
 if __name__ == '__main__':
