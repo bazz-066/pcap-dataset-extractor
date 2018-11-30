@@ -81,6 +81,7 @@ public class FrameMain extends javax.swing.JFrame {
         btnHexWithSlashDecode = new javax.swing.JButton();
         btnHexWithoutSlashDecode = new javax.swing.JButton();
         btnDisassemble = new javax.swing.JButton();
+        btnB64Disassemble = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -238,6 +239,14 @@ public class FrameMain extends javax.swing.JFrame {
             }
         });
 
+        btnB64Disassemble.setText("B64 + Disassemble");
+        btnB64Disassemble.setEnabled(false);
+        btnB64Disassemble.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnB64DisassembleActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -304,7 +313,8 @@ public class FrameMain extends javax.swing.JFrame {
                             .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(btnHexWithSlashDecode)
                             .addComponent(btnHexWithoutSlashDecode)
-                            .addComponent(btnDisassemble))
+                            .addComponent(btnDisassemble)
+                            .addComponent(btnB64Disassemble))
                         .addGap(77, 77, 77))))
         );
         layout.setVerticalGroup(
@@ -378,7 +388,9 @@ public class FrameMain extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnHexWithoutSlashDecode)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnDisassemble)))
+                        .addComponent(btnDisassemble)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnB64Disassemble)))
                 .addContainerGap())
         );
 
@@ -441,6 +453,7 @@ public class FrameMain extends javax.swing.JFrame {
             this.btnNoPayload.setEnabled(true);
             this.btnLoadIndexes.setEnabled(false);
             this.btnDisassemble.setEnabled(true);
+            this.btnB64Disassemble.setEnabled(true);
             
             Flow flow = this.flowDataset.nextFlowFile();
             this.txtFilename.setText(flow.getFlowAbsoluteFilename());
@@ -535,6 +548,28 @@ public class FrameMain extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btnDisassembleActionPerformed
 
+    private void btnB64DisassembleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnB64DisassembleActionPerformed
+        Capstone cs = new Capstone(Capstone.CS_ARCH_X86, Capstone.CS_MODE_32);
+        Capstone.CsInsn[] allInsns;
+        
+        String selectedText = this.txtOriginal.getSelectedText();
+        if(selectedText.length() > 0) {
+            try {
+                byte[] decodedBytes = Base64.getDecoder().decode(selectedText);
+                allInsns = cs.disasm(decodedBytes, 0x1000);
+                this.txtEncoded.setText("");
+                for(int i=0; i<allInsns.length; i++) {
+                    this.txtEncoded.append(allInsns[i].address + ":" + allInsns[i].mnemonic + " " + allInsns[i].opStr + "\n");
+                }
+
+                this.txtEncoded.setCaretPosition(0);
+            }
+            catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(this, "Not a valid Base64 string." + ex.getMessage());
+            }
+        }
+    }//GEN-LAST:event_btnB64DisassembleActionPerformed
+
     
     /**
      * @param args the command line arguments
@@ -617,6 +652,7 @@ public class FrameMain extends javax.swing.JFrame {
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnB64Disassemble;
     private javax.swing.JButton btnBase64Decode;
     private javax.swing.JButton btnDisassemble;
     private javax.swing.JButton btnHexWithSlashDecode;

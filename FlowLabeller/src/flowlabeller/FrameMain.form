@@ -103,6 +103,7 @@
                           <Component id="btnHexWithSlashDecode" min="-2" max="-2" attributes="0"/>
                           <Component id="btnHexWithoutSlashDecode" min="-2" max="-2" attributes="0"/>
                           <Component id="btnDisassemble" min="-2" max="-2" attributes="0"/>
+                          <Component id="btnB64Disassemble" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="-2" pref="77" max="-2" attributes="0"/>
                   </Group>
@@ -198,6 +199,8 @@
                       <Component id="btnHexWithoutSlashDecode" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="btnDisassemble" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="btnB64Disassemble" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -495,6 +498,15 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnDisassembleActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="btnB64Disassemble">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="B64 + Disassemble"/>
+        <Property name="enabled" type="boolean" value="false"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnB64DisassembleActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>
